@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Response
+from fastapi.middleware.cors import CORSMiddleware
 from dotenv import dotenv_values
 from db.cliente import conexion_mongo
 from db.modelo import Usuario
@@ -12,6 +13,22 @@ usuario = db['usuario']
 anytwitter = FastAPI()
 
 
+origins = [
+    "http://localhost.tiangolo.com",
+    "https://localhost.tiangolo.com",
+    "http://localhost",
+    "http://localhost:8080",
+    "http://localhost:5173",
+]
+
+anytwitter.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 @anytwitter.get("/")
 async def root():
     return {"message": "Hello World"}
@@ -21,7 +38,7 @@ async def iniciar_sesion(usr: Usuario, rpta: Response):
     hallar = usuario.find_one({'correo': usr.correo})
     if not hallar or hallar['clave'] != usr.clave:
         rpta.status_code = 400
-        return "El correo o clave no ha sido registrado"
+        return "El correo o clave es incorrecto"
     return "Iniciado sesion exitosamente"
 
 @anytwitter.post("/crearUsuario", status_code=200)
