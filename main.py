@@ -5,7 +5,8 @@ from db.cliente import conexion_mongo
 from db.modelo import Usuario
 config = dotenv_values(".env")
 
-cliente = conexion_mongo(config['CLAVE_MONGO'])
+# cliente = conexion_mongo(config['URI_MONGO_CLOUD'])
+cliente = conexion_mongo(config['MONGO_URI'])
 db = cliente['anytwitter']
 usuario = db['usuario']
 
