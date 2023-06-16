@@ -1,6 +1,8 @@
 from pydantic import BaseModel
 
 class Usuario(BaseModel):
-    correo: str
-    clave: str
-    rclave: str | None=None
+    name: str
+    handle: str
+    password: str
+    # salt: str
+    # rclave: str | None=None
