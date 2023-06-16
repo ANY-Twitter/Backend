@@ -40,8 +40,13 @@ async def root():
 
 @anytwitter.post("/usuarios")
 async def iniciar_sesion(usr: Usuario, rpta: Response):
-    hallar = usuario.find_one({'correo': usr.correo})
-    if not hallar or hallar['clave'] != usr.clave:
+    hallar = usuario.find_one({'handle': usr.handle})
+
+    hasher = SHA256.new()
+    hasher.update(usr.password.encode() + hallar['salt']) 
+    usr.password = hasher.digest()
+
+    if not hallar or hallar['hashed_pass'] != usr.password:
         rpta.status_code = 400
         return "El correo o clave es incorrecto"
 
