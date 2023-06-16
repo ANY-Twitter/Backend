@@ -79,4 +79,4 @@ async def registrar(name: Annotated[str,Form()],
                         'handle':handle,
                         'hashed_pass':hashed_pass,
                         'salt':salt})
-    return "Usuario creado exitosamente"
+    return {'name':name, 'handle': handle, 'srcProfilePicture': ''} 
