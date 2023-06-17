@@ -97,7 +97,8 @@ async def obtener_mensajes():
 
     retorno = list(retorno)
     for i in range(len(retorno)):
-        retorno[i].pop('_id')
+        # retorno[i].pop('_id')
+        retorno[i]['_id'] = str(retorno[i]['_id'])
         retorno[i]['hash'] = retorno[i]['hash'].hex()
         retorno[i]['message'] = retorno[i]['message'].hex()
         retorno[i]['signedHash'] = retorno[i]['signedHash'].hex()
