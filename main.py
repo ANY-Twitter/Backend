@@ -9,6 +9,7 @@ from dotenv import dotenv_values
 from typing import Annotated,Optional
 from db.cliente import conexion_mongo
 from db.modelo import Usuario
+from bson import ObjectId
 config = dotenv_values(".env")
 
 # cliente = conexion_mongo(config['URI_MONGO_CLOUD'])
