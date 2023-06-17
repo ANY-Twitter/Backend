@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Response,Form, UploadFile,File,HTTPException
+from fastapi.responses import StreamingResponse
 import json
 from Crypto import Random
 from Crypto.Hash import SHA256
@@ -97,10 +98,12 @@ async def obtener_mensajes():
     retorno = list(retorno)
     for i in range(len(retorno)):
         retorno[i].pop('_id')
-    print(retorno[0]['hash'])        
-    return Response(content=retorno[0]['hash'], media_type="application/octet-stream")
+        retorno[i]['hash'] = retorno[i]['hash'].hex()
+        retorno[i]['message'] = retorno[i]['message'].hex()
+        retorno[i]['signedHash'] = retorno[i]['signedHash'].hex()
+
     # print(retorno['hash'])
-    # return 
+    return retorno
 
 @anytwitter.post("/crearUsuario", status_code=200)
 async def registrar(name: Annotated[str,Form()],
