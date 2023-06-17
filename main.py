@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Response,Form, UploadFile,File,HTTPException
+import json
 from Crypto import Random
 from Crypto.Hash import SHA256
 import aiofiles
@@ -13,6 +14,7 @@ config = dotenv_values(".env")
 cliente = conexion_mongo(config['MONGO_URI'])
 db = cliente['anytwitter']
 usuario = db['usuario']
+mensajes = db['mensajes']
 
 
 anytwitter = FastAPI()
@@ -41,21 +43,57 @@ async def root():
 @anytwitter.post("/usuarios")
 async def iniciar_sesion(usr: Usuario, rpta: Response):
     hallar = usuario.find_one({'handle': usr.handle})
+    if not hallar:
+        rpta.status_code = 400
+        return "El usuario no existe"
 
     hasher = SHA256.new()
     hasher.update(usr.password.encode() + hallar['salt']) 
     usr.password = hasher.digest()
 
-    if not hallar or hallar['hashed_pass'] != usr.password:
+    if hallar['hashed_pass'] != usr.password:
         rpta.status_code = 400
         return "El correo o clave es incorrecto"
 
     return {'name':hallar['name'], 'handle': hallar['handle'], 'srcProfilePicture': ''} 
 
+@anytwitter.get("/getKeys/{handle}")
+async def get_keys(handle: str,response: Response):
+
+    print(handle)
+    user = usuario.find_one({'handle': handle})
+
+    if not user: 
+        response.status_code = 400
+        return "Usuario no encontrado"
+    
+    print(user)
+    return json.loads(user['public_keys'])
+
+
+@anytwitter.post("/submitMessage")
+async def submit_message(message: Annotated[UploadFile,File()],
+                         hash_: Annotated[UploadFile,File()],
+                         signedHash: Annotated[UploadFile,File()]):
+    
+   
+    messageBytes = await message.read()
+    hashBytes = await  hash_.read()
+    signedHashBytes = await signedHash.read()
+
+    print(len(messageBytes))
+    print(len(hashBytes))
+    print(len(signedHashBytes))
+
+    mensajes.insert_one({'message': messageBytes, 'hash': hashBytes, 'signedHash': signedHashBytes})
+
+    return "uwu"
+
 @anytwitter.post("/crearUsuario", status_code=200)
 async def registrar(name: Annotated[str,Form()],
                     handle: Annotated[str,Form()], 
                     password: Annotated[str,Form()], 
+                    keys: Annotated[str,Form()],
                     rpta: Response,
                     user_photo: Optional[Annotated[UploadFile,File]] = File(None)):
     hallar = usuario.find_one({'handle': handle})
@@ -76,7 +114,6 @@ async def registrar(name: Annotated[str,Form()],
 
     pictureName = ''
     srcProfilePicture = ''
-
 
     if user_photo:
         base_dir = './images/'
@@ -108,6 +145,7 @@ async def registrar(name: Annotated[str,Form()],
                         'handle':handle,
                         'hashed_pass':hashed_pass,
                         'salt':salt,
+                        'public_keys': keys,
                         'pictureName': pictureName})
     
 
