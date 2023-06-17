@@ -89,6 +89,19 @@ async def submit_message(message: Annotated[UploadFile,File()],
 
     return "uwu"
 
+@anytwitter.get("/obtenerMensajes")
+async def obtener_mensajes():
+    retorno = mensajes.find()
+
+
+    retorno = list(retorno)
+    for i in range(len(retorno)):
+        retorno[i].pop('_id')
+    print(retorno[0]['hash'])        
+    return Response(content=retorno[0]['hash'], media_type="application/octet-stream")
+    # print(retorno['hash'])
+    # return 
+
 @anytwitter.post("/crearUsuario", status_code=200)
 async def registrar(name: Annotated[str,Form()],
                     handle: Annotated[str,Form()], 
