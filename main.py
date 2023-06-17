@@ -8,6 +8,7 @@ from dotenv import dotenv_values
 from typing import Annotated,Optional
 from db.cliente import conexion_mongo
 from db.modelo import Usuario
+from bson import ObjectId
 config = dotenv_values(".env")
 
 # cliente = conexion_mongo(config['URI_MONGO_CLOUD'])
@@ -97,10 +98,31 @@ async def obtener_mensajes():
     retorno = list(retorno)
     for i in range(len(retorno)):
         retorno[i].pop('_id')
+        retorno[i]['hash'] = retorno[i]['hash'].hex()
+        retorno[i]['message'] = retorno[i]['message'].hex()
+        retorno[i]['signedHash'] = retorno[i]['signedHash'].hex()
+
+    # print(retorno['hash'])
+    return retorno
+
+""" @anytwitter.get("/obtenerMensajes")
+async def obtener_mensajes():
+    retorno = mensajes.find()
+    return [str(d['_id']) for d in retorno]
+
+
+    retorno = list(retorno)
+    for i in range(len(retorno)):
+        retorno[i].pop('_id')
     print(retorno[0]['hash'])        
     return Response(content=retorno[0]['hash'], media_type="application/octet-stream")
     # print(retorno['hash'])
-    # return 
+    # return  """
+
+@anytwitter.get("/obtenerCampo")
+async def obtener_campo(_id:str, campo: str):
+    retorno = mensajes.find_one({'_id': ObjectId(_id)})
+    return Response(content=retorno[campo], media_type="application/octet-stream")
 
 @anytwitter.post("/crearUsuario", status_code=200)
 async def registrar(name: Annotated[str,Form()],
