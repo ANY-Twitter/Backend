@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import dotenv_values
 from typing import Annotated,Optional
 from db.cliente import conexion_mongo
-from db.modelo import Usuario
+from db.modelo import Usuario, Tweet, TweetWithInfo
 from bson import ObjectId
 config = dotenv_values(".env")
 
@@ -17,6 +17,7 @@ cliente = conexion_mongo(config['MONGO_URI'])
 db = cliente['anytwitter']
 usuario = db['usuario']
 mensajes = db['mensajes']
+tweets = db['tweets']
 
 
 anytwitter = FastAPI()
@@ -73,6 +74,20 @@ async def get_keys(handle: str,response: Response):
     return json.loads(user['public_keys'])
 
 
+@anytwitter.post("/tweet")
+async def tweet(tweet_data: Tweet, response: Response):
+
+    user = usuario.find_one({'handle':tweet_data.handle})
+
+    if not user: 
+        response.status_code = 400
+        return "Usuario no encontrado"
+    
+    tweets.insert_one({'handle':tweet_data.handle,'data': tweet_data.data})
+
+ 
+    return "Inicio exitoso"
+
 @anytwitter.post("/submitMessage")
 async def submit_message(message: Annotated[UploadFile,File()],
                          hash_: Annotated[UploadFile,File()],
@@ -105,6 +120,32 @@ async def obtener_mensajes():
 
     # print(retorno['hash'])
     return retorno
+
+@anytwitter.get("/obtenerTweets",response_model=list[TweetWithInfo])
+async def obtener_tweets():
+    all_tweets = tweets.aggregate([#{"$match": {"handle": '2'}}, 
+                         { "$lookup": { 
+                             "from": "usuario", 
+                             "localField": "handle", 
+                             "foreignField": "handle", 
+                             "as": "usuario" } 
+                             }, 
+                         { "$project": { 
+                             "id": {'$toString': "$_id"},
+                             "data": 1, 
+                             "usuario.name": 1, 
+                             "usuario.handle": 1, 
+                             "usuario.pictureName": 1 
+                             } 
+                         }])
+    all_tweets = list(all_tweets)
+
+
+    
+    return all_tweets 
+
+
+
 
 @anytwitter.post("/crearUsuario", status_code=200)
 async def registrar(name: Annotated[str,Form()],
@@ -145,9 +186,9 @@ async def registrar(name: Annotated[str,Form()],
         hasher.update((user_photo.filename + handle).encode())
         hashed_name = hasher.hexdigest()
         print(hashed_name)
-        pictureName = hashed_name + extension
+        pictureName = hashed_name + '.' +  extension
 
-        dstProfilePicture = base_dir + '.' + pictureName 
+        dstProfilePicture = base_dir + pictureName 
         # pictureName = user_photo.filename
 
 
