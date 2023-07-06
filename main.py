@@ -77,13 +77,15 @@ async def get_keys(handle: str,response: Response):
 @anytwitter.post("/tweet")
 async def tweet(tweet_data: Tweet, response: Response):
 
+    print(tweet_data.date.isoformat())
+
     user = usuario.find_one({'handle':tweet_data.handle})
 
     if not user: 
         response.status_code = 400
         return "Usuario no encontrado"
     
-    tweets.insert_one({'handle':tweet_data.handle,'data': tweet_data.data})
+    tweets.insert_one({'handle':tweet_data.handle,'data': tweet_data.data,'date':tweet_data.date})
 
  
     return "Inicio exitoso"
@@ -130,12 +132,14 @@ async def obtener_tweets():
                              "foreignField": "handle", 
                              "as": "usuario" } 
                              }, 
+                         {"$sort": {"date":-1}},
                          { "$project": { 
                              "id": {'$toString': "$_id"},
                              "data": 1, 
                              "usuario.name": 1, 
                              "usuario.handle": 1, 
-                             "usuario.pictureName": 1 
+                             "usuario.pictureName": 1,
+                             "date":1
                              } 
                          }])
     all_tweets = list(all_tweets)

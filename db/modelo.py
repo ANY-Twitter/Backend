@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from datetime import datetime
 
 class Usuario(BaseModel):
     name: str | None = None
@@ -10,6 +11,7 @@ class Usuario(BaseModel):
 class Tweet(BaseModel):
     handle: str
     data: str
+    date: datetime
 
 class InfoUsuario(BaseModel):
     handle: str
@@ -20,3 +22,4 @@ class TweetWithInfo(BaseModel):
     data: str
     usuario: list[InfoUsuario]
     id: str
+    date: datetime
