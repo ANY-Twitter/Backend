@@ -23,3 +23,7 @@ class TweetWithInfo(BaseModel):
     usuario: list[InfoUsuario]
     id: str
     date: datetime
+
+class Message(BaseModel):
+    message: str
+    signedHash: str

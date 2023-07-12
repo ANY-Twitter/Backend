@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import dotenv_values
 from typing import Annotated,Optional
 from db.cliente import conexion_mongo
-from db.modelo import Usuario, Tweet, TweetWithInfo
+from db.modelo import Usuario, Tweet, TweetWithInfo, Message
 from bson import ObjectId
 config = dotenv_values(".env")
 
@@ -91,22 +91,15 @@ async def tweet(tweet_data: Tweet, response: Response):
     return "Inicio exitoso"
 
 @anytwitter.post("/submitMessage")
-async def submit_message(message: Annotated[UploadFile,File()],
-                         hash_: Annotated[UploadFile,File()],
-                         signedHash: Annotated[UploadFile,File()]):
+async def submit_message(message: Message):
     
    
-    messageBytes = await message.read()
-    hashBytes = await  hash_.read()
-    signedHashBytes = await signedHash.read()
+    print(len(message.message))
+    print(len(message.signedHash))
 
-    print(len(messageBytes))
-    print(len(hashBytes))
-    print(len(signedHashBytes))
+    mensajes.insert_one({'message': message.message, 'signedHash': message.signedHash})
 
-    mensajes.insert_one({'message': messageBytes, 'hash': hashBytes, 'signedHash': signedHashBytes})
-
-    return "uwu"
+    return "successful submit"
 
 @anytwitter.get("/obtenerMensajes")
 async def obtener_mensajes():
