@@ -24,6 +24,11 @@ class TweetWithInfo(BaseModel):
     id: str
     date: datetime
 
+class MessageWithInfo(BaseModel):
+    id: str
+    message: str
+    signedHash: str
+
 class Message(BaseModel):
     message: str
     signedHash: str

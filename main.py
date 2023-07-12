@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import dotenv_values
 from typing import Annotated,Optional
 from db.cliente import conexion_mongo
-from db.modelo import Usuario, Tweet, TweetWithInfo, Message
+from db.modelo import Usuario, Tweet, TweetWithInfo, Message, MessageWithInfo
 from bson import ObjectId
 config = dotenv_values(".env")
 
@@ -101,19 +101,16 @@ async def submit_message(message: Message):
 
     return "successful submit"
 
-@anytwitter.get("/obtenerMensajes")
+@anytwitter.get("/obtenerMensajes",response_model=list[MessageWithInfo])
 async def obtener_mensajes():
-    retorno = mensajes.find()
 
-
+    retorno = mensajes.aggregate([{"$project":
+                        {"id":{"$toString":"$_id"},
+                         "_id":0,
+                         "message":1,
+                         "signedHash":1}
+                       }])
     retorno = list(retorno)
-    for i in range(len(retorno)):
-        retorno[i]['_id'] = str(retorno[i]['_id'])
-        retorno[i]['hash'] = retorno[i]['hash'].hex()
-        retorno[i]['message'] = retorno[i]['message'].hex()
-        retorno[i]['signedHash'] = retorno[i]['signedHash'].hex()
-
-    # print(retorno['hash'])
     return retorno
 
 @anytwitter.get("/obtenerTweets",response_model=list[TweetWithInfo])
@@ -132,7 +129,8 @@ async def obtener_tweets():
                              "usuario.name": 1, 
                              "usuario.handle": 1, 
                              "usuario.pictureName": 1,
-                             "date":1
+                             "date":1,
+                             "_id":0
                              } 
                          }])
     all_tweets = list(all_tweets)
