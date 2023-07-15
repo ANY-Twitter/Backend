@@ -18,6 +18,12 @@ class InfoUsuario(BaseModel):
     name: str
     pictureName: str
 
+class UserKeys(BaseModel):
+    handle: str
+    keys: str
+
+
+
 class TweetWithInfo(BaseModel):
     data: str
     usuario: list[InfoUsuario]

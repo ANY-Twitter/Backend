@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import dotenv_values
 from typing import Annotated,Optional
 from db.cliente import conexion_mongo
-from db.modelo import Usuario, Tweet, TweetWithInfo, Message, MessageWithInfo
+from db.modelo import Usuario, Tweet, TweetWithInfo, Message, MessageWithInfo, UserKeys
 from bson import ObjectId
 config = dotenv_values(".env")
 
@@ -59,6 +59,14 @@ async def iniciar_sesion(usr: Usuario, rpta: Response):
         return "El correo o clave es incorrecto"
 
     return {'name':hallar['name'], 'handle': hallar['handle'], 'srcProfilePicture': ''} 
+
+
+@anytwitter.get("/getKeysList",response_model=list[UserKeys])
+async def get_user_list():
+    user_keys = usuario.aggregate([{"$project":{'_id':0,'handle':1,'keys':'$public_keys'}}])
+
+    return list(user_keys) 
+
 
 @anytwitter.get("/getKeys/{handle}")
 async def get_keys(handle: str,response: Response):
