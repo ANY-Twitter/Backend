@@ -63,7 +63,7 @@ async def iniciar_sesion(usr: Usuario, rpta: Response):
 
 @anytwitter.get("/getKeysList",response_model=list[UserKeys])
 async def get_user_list():
-    user_keys = usuario.aggregate([{"$project":{'_id':0,'handle':1,'keys':'$public_keys'}}])
+    user_keys = usuario.aggregate([{"$project":{'_id':0,'handle':1,'name':1,'keys':'$public_keys'}}])
 
     return list(user_keys) 
 

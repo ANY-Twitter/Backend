@@ -21,6 +21,7 @@ class InfoUsuario(BaseModel):
 class UserKeys(BaseModel):
     handle: str
     keys: str
+    name: str
 
 
 
