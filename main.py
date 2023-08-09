@@ -141,6 +141,7 @@ async def obtener_tweets():
                              "_id":0
                              } 
                          }])
+    #db.tweets.aggregate([{ "$lookup": { "from": "usuario", "localField": "handle", "foreignField": "handle", "as": "usuario" } }, {"$sort": {"date":-1}}, { "$project": { "id": {'$toString': "$_id"}, "data": 1, "usuario": {"$first" : "$usuario"} , "date":1, "_id":0 } },{"$unset": ["usuario.hashed_pass","usuario.public_keys","usuario._id","usuario.salt"]}])
     all_tweets = list(all_tweets)
 
 
