@@ -29,6 +29,7 @@ origins = [
     "http://localhost",
     "http://localhost:8080",
     "http://localhost:5173",
+    "http://localhost:3000"
 ]
 
 anytwitter.add_middleware(
@@ -43,7 +44,7 @@ anytwitter.add_middleware(
 async def root():
     return {"message": "Hello World"}
 
-@anytwitter.post("/usuarios")
+@anytwitter.post("/login")
 async def iniciar_sesion(usr: Usuario, rpta: Response):
     hallar = usuario.find_one({'handle': usr.handle})
     if not hallar:
