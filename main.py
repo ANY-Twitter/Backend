@@ -5,12 +5,10 @@ from Crypto import Random
 from Crypto.Hash import SHA256
 import aiofiles
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import dotenv_values
 from typing import Annotated,Optional
 from db.cliente import conexion_mongo
 from db.modelo import Usuario, Tweet, TweetWithInfo, Message, MessageWithInfo, UserKeys
 from bson import ObjectId
-config = dotenv_values(".env")
 
 # cliente = conexion_mongo(config['URI_MONGO_CLOUD'])
 cliente = conexion_mongo(config['MONGO_URI'])
