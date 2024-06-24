@@ -5,7 +5,7 @@ from json import dumps
 from Crypto.Hash import SHA256
 from Crypto import Random
 from db.cliente import conexion_mongo
-from os import getenv
+from os import getenv, path
 from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
 
 
@@ -13,6 +13,7 @@ app = func.FunctionApp()
 
 connect_str = getenv('AZURE_STORAGE_CONNECTION_STRING')
 blob_service_client = BlobServiceClient.from_connection_string(connect_str)
+container_name = "anytwitter"
 
 cliente = conexion_mongo(getenv('MONGO_URI'))
 db = cliente['anytwitter']
@@ -158,16 +159,18 @@ def registrar(req: func.HttpRequest) -> func.HttpResponse:
         
         extension = content_type.split('/')[1]
 
+
         hasher.update((user_photo.filename + handle).encode())
         hashed_name = hasher.hexdigest()
         print(hashed_name)
         pictureName = hashed_name + '.' +  extension
 
-        dstProfilePicture = base_dir + pictureName
+        srcProfilePicture += f"{getenv('IMAGES_ENDPOINT')}/images/{pictureName}"
 
-        srcProfilePicture += f"{getenv('ENDPOINT')}/images/{pictureName}"
-
-        user_photo.save(dstProfilePicture)
+        blob_path = path.join("images",pictureName)
+        blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_path)
+        blob_client.upload_blob(user_photo.stream.read())
+            
 
     usuario.insert_one({'name':name
                         ,'handle':handle
