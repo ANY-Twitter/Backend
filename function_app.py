@@ -153,11 +153,8 @@ def registrar(req: func.HttpRequest) -> func.HttpResponse:
 
     pictureName = ''
     srcProfilePicture = ''
-    print(user_photo)
-    print(user_photo.content_type)
 
     if user_photo:
-        base_dir = './images/'
         content_type = user_photo.content_type
 
         if content_type not in ["image/jpeg", "image/png", "image/gif"]:
@@ -175,7 +172,7 @@ def registrar(req: func.HttpRequest) -> func.HttpResponse:
 
         blob_path = path.join("images",pictureName)
         blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_path)
-        blob_client.upload_blob(user_photo.stream.read())
+        blob_client.upload_blob(user_photo.stream.read(), content_type=content_type)
             
 
     usuario.insert_one({'name':name
