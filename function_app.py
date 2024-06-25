@@ -1,6 +1,7 @@
 import azure.functions as func
 import logging
-from db.schemas import Usuario, UsuarioSchema, Tweet, Message
+from datetime import datetime
+from db.schemas import TweetSchema, UsuarioSchema, MessageSchema, Message
 from json import dumps
 from Crypto.Hash import SHA256
 from Crypto import Random
@@ -15,17 +16,20 @@ connect_str = getenv('AZURE_STORAGE_CONNECTION_STRING')
 blob_service_client = BlobServiceClient.from_connection_string(connect_str)
 container_name = "anytwitter"
 
-cliente = conexion_mongo(f"mongodb://{quote_plus(getenv('MONGO_USERNAME'))}:{quote_plus(getenv('MONGO_PASSWORD'))}@anytwitter.mongo.cosmos.azure.com:10255/?ssl=true&retrywrites=false&maxIdleTimeMS=120000&appName=@anytwitter@")
+cliente = conexion_mongo(
+    f"mongodb://{quote_plus(getenv('MONGO_USERNAME'))}:{quote_plus(getenv('MONGO_PASSWORD'))}@anytwitter.mongo.cosmos.azure.com:10255/?ssl=true&retrywrites=false&maxIdleTimeMS=120000&appName=@anytwitter@")
 
 db = cliente['anytwitter']
 usuario = db['usuario']
 mensajes = db['mensajes']
 tweets = db['tweets']
 
+
 @app.route(route='base', methods=["GET"], auth_level=func.AuthLevel.ANONYMOUS)
 def index(req: func.HttpRequest) -> func.HttpResponse:
 
     return func.HttpResponse("Hello, world")
+
 
 @app.route(route="login", auth_level=func.AuthLevel.ANONYMOUS, methods=["POST"])
 def iniciar_sesion(req: func.HttpRequest) -> func.HttpResponse:
@@ -37,95 +41,142 @@ def iniciar_sesion(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse("El usuario no existe", status_code=400)
 
     hasher = SHA256.new()
-    hasher.update(usr.password.encode() + hallar['salt']) 
+    hasher.update(usr.password.encode() + hallar['salt'])
     usr.password = hasher.digest()
 
     if hallar['hashed_pass'] != usr.password:
         return func.HttpResponse("El correo o clave es incorrecto", status_code=400)
+    src = ''
 
-    return func.HttpResponse(dumps({'name':hallar['name'], 'handle': hallar['handle'], 'srcProfilePicture': ''}), mimetype="application/json")
+    logging.info(hallar['pictureName'])
+    if hallar['pictureName'] != '':
+        src = f"{getenv('IMAGES_ENDPOINT')}/images/{hallar['pictureName']}"
+        logging.info(src)
+
+    return func.HttpResponse(dumps({'name': hallar['name'], 'handle': hallar['handle'], 'srcProfilePicture': src}), mimetype="application/json")
+
 
 @app.route(route="getKeysList", methods=["GET"], auth_level=func.AuthLevel.ANONYMOUS)
 def get_user_list(req: func.HttpRequest) -> func.HttpResponse:
-    user_keys = usuario.aggregate([{"$project":{'_id':0,'handle':1,'name':1,'keys':'$public_keys'}}])
+    user_keys = usuario.aggregate(
+        [{"$project": {'_id': 0, 'handle': 1, 'name': 1, 'keys': '$public_keys'}}])
 
     return func.HttpResponse(dumps(list(user_keys)), mimetype="application/json")
 
+
 @app.route(route="getKeys/{handle}", methods=["GET"], auth_level=func.AuthLevel.ANONYMOUS)
 def get_keys(req: func.HttpRequest) -> func.HttpResponse:
-    
+
     handle = req.route_params.get('handle')
     print(handle)
     user = usuario.find_one({'handle': handle})
 
     if not user:
         return func.HttpResponse("Usuario no encontrado", status_code=400)
-    
+
     print(user)
     return func.HttpResponse(dumps(user['public_keys']), mimetype="application/json")
 
+
 @app.route(route="tweet", methods=["POST"], auth_level=func.AuthLevel.ANONYMOUS)
 def tweet(req: func.HttpRequest) -> func.HttpResponse:
-    tweet_data = Tweet().load(req.get_json())
+    json_req = req.get_json()
+    logging.info(json_req)
 
-    print(tweet_data.date.isoformat())
+    tweet_date = datetime.fromisoformat(json_req['date'].replace('Z', ''))
 
-    user = usuario.find_one({'handle':tweet_data.handle})
+    logging.info(tweet_date)
 
-    if not user: 
+    tweet_data = TweetSchema().load(
+        {'handle': json_req['handle'], 'data': json_req['data'], 'date': tweet_date.isoformat()})
+
+    user = usuario.find_one({'handle': tweet_data.handle})
+
+    if not user:
         return func.HttpResponse("Usuario no encontrado", status_code=400)
-    
-    tweets.insert_one({'handle':tweet_data.handle,'data': tweet_data.data,'date':tweet_data.date})
+
+    logging.info('fecha' + tweet_data.date.isoformat())
+    tweets.insert_one({'handle': tweet_data.handle,
+                      'data': tweet_data.data, 'date': tweet_data.date.isoformat()})
 
     return func.HttpResponse("Inicio exitoso", status_code=200)
+
 
 @app.route(route="submitMessage", methods=["POST"], auth_level=func.AuthLevel.ANONYMOUS)
 def submit_message(req: func.HttpRequest) -> func.HttpResponse:
 
-    message = Message().load(req.get_json())
+    message = MessageSchema().load(req.get_json())
 
     print(len(message.message))
     print(len(message.signedHash))
 
-    mensajes.insert_one({'message': message.message, 'signedHash': message.signedHash})
+    mensajes.insert_one({'message': message.message,
+                        'signedHash': message.signedHash})
 
     return func.HttpResponse("Mensaje subido", status_code=200)
 
+
 @app.route(route="obtenerMensajes", methods=["GET"], auth_level=func.AuthLevel.ANONYMOUS)
 def obtener_mensajes(req: func.HttpRequest) -> func.HttpResponse:
-    
-        retorno = mensajes.aggregate([{"$project":
-                            {"id":{"$toString":"$_id"},
-                            "_id":0,
-                            "message":1,
-                            "signedHash":1}
-                        }])
-        retorno = list(retorno)
-        return func.HttpResponse(dumps(retorno), mimetype="application/json")
+
+    retorno = mensajes.aggregate([{"$project":
+                                   {"id": {"$toString": "$_id"},
+                                    "_id": 0,
+                                    "message": 1,
+                                    "signedHash": 1}
+                                   }])
+    retorno = list(retorno)
+    return func.HttpResponse(dumps(retorno), mimetype="application/json")
+
+
+def get_full_picture_url(picture_name):
+    if picture_name != '':
+        base_url = getenv('IMAGES_ENDPOINT') + "/images/"
+        return f"{base_url}{picture_name}"
+    return ''
+
 
 @app.route(route="obtenerTweets", methods=["GET"], auth_level=func.AuthLevel.ANONYMOUS)
 def obtener_tweets(req: func.HttpRequest) -> func.HttpResponse:
-    all_tweets = tweets.aggregate([#{"$match": {"handle": '2'}}, 
-                         { "$lookup": { 
-                             "from": "usuario", 
-                             "localField": "handle", 
-                             "foreignField": "handle", 
-                             "as": "usuario" } 
-                             }, 
-                         {"$sort": {"date":-1}},
-                         { "$project": { 
-                             "id": {'$toString': "$_id"},
-                             "data": 1, 
-                             "usuario.name": 1, 
-                             "usuario.handle": 1, 
-                             "usuario.pictureName": 1,
-                             "date":1,
-                             "_id":0
-                             } 
-                         }])
-    all_tweets = list(all_tweets)
-    
+    logging.info(getenv('IMAGES_ENDPOINT') +
+                 "/images/" + "$usuario.pictureName")
+    all_tweets = tweets.aggregate([  # {"$match": {"handle": '2'}},
+        {"$lookup": {
+            "from": "usuario",
+            "localField": "handle",
+            "foreignField": "handle",
+            "as": "usuario"}
+         },
+        {"$sort": {"date": -1}},
+        {"$project": {
+            "id": {'$toString': "$_id"},
+            "data": 1,
+            "usuario.name": 1,
+            "usuario.handle": 1,
+            "usuario.pictureName": 1,
+            "date": {"$toString": "$date"},
+            "_id": 0
+        }
+        }])
+    all_tweets = [{"id": tweet["id"], "usuario": tweet['usuario'],
+                   "data": tweet['data'], "date": tweet['date']} for tweet in list(all_tweets)]
+    logging.info(type(all_tweets[0]['date']))
+
+    all_tweets = [
+        {
+            "id": tweet["id"],
+            "usuario": [{
+                "name": tweet['usuario'][0]['name'],
+                "handle": tweet['usuario'][0]['handle'],
+                "pictureName": get_full_picture_url(tweet['usuario'][0]['pictureName'])
+            }],
+            "data": tweet['data'],
+            "date": tweet['date']
+        } for tweet in list(all_tweets)
+    ]
+
     return func.HttpResponse(dumps(all_tweets), mimetype="application/json")
+
 
 @app.route(route="crearUsuario", methods=["POST"], auth_level=func.AuthLevel.ANONYMOUS)
 def registrar(req: func.HttpRequest) -> func.HttpResponse:
@@ -138,6 +189,7 @@ def registrar(req: func.HttpRequest) -> func.HttpResponse:
     print(req.form)
 
     user_photo = req.files.get('user_photo')
+    logging.info(user_photo)
 
     hallar = usuario.find_one({'handle': handle})
     if hallar:
@@ -159,28 +211,23 @@ def registrar(req: func.HttpRequest) -> func.HttpResponse:
 
         if content_type not in ["image/jpeg", "image/png", "image/gif"]:
             return func.HttpResponse("Formato invalido", status_code=400)
-        
-        extension = content_type.split('/')[1]
 
+        extension = content_type.split('/')[1]
 
         hasher.update((user_photo.filename + handle).encode())
         hashed_name = hasher.hexdigest()
         print(hashed_name)
-        pictureName = hashed_name + '.' +  extension
+        pictureName = hashed_name + '.' + extension
 
         srcProfilePicture += f"{getenv('IMAGES_ENDPOINT')}/images/{pictureName}"
 
-        blob_path = path.join("images",pictureName)
-        blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_path)
-        blob_client.upload_blob(user_photo.stream.read(), content_type=content_type)
-            
+        blob_path = path.join("images", pictureName)
+        blob_client = blob_service_client.get_blob_client(
+            container=container_name, blob=blob_path)
+        blob_client.upload_blob(user_photo.stream.read(),
+                                content_type=content_type)
 
-    usuario.insert_one({'name':name
-                        ,'handle':handle
-                        ,'hashed_pass':hashed_pass
-                        ,'salt':salt
-                        ,'public_keys': keys
-                        ,'pictureName': pictureName})
-    
-    return func.HttpResponse(dumps({'name':name, 'handle': handle, 'srcProfilePicture': srcProfilePicture}), mimetype="application/json")
+    usuario.insert_one({'name': name, 'handle': handle, 'hashed_pass': hashed_pass,
+                       'salt': salt, 'public_keys': keys, 'pictureName': pictureName})
 
+    return func.HttpResponse(dumps({'name': name, 'handle': handle, 'srcProfilePicture': srcProfilePicture}), mimetype="application/json")
