@@ -7,7 +7,7 @@ from Crypto import Random
 from db.cliente import conexion_mongo
 from os import getenv, path
 from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
-
+from urllib.parse import quote_plus
 
 app = func.FunctionApp()
 
@@ -15,11 +15,17 @@ connect_str = getenv('AZURE_STORAGE_CONNECTION_STRING')
 blob_service_client = BlobServiceClient.from_connection_string(connect_str)
 container_name = "anytwitter"
 
-cliente = conexion_mongo(getenv('MONGO_URI'))
+cliente = conexion_mongo(f"mongodb://{quote_plus(getenv('MONGO_USERNAME'))}:{quote_plus(getenv('MONGO_PASSWORD'))}@anytwitter.mongo.cosmos.azure.com:10255/?ssl=true&retrywrites=false&maxIdleTimeMS=120000&appName=@anytwitter@")
+
 db = cliente['anytwitter']
 usuario = db['usuario']
 mensajes = db['mensajes']
 tweets = db['tweets']
+
+@app.route(route='base', methods=["GET"], auth_level=func.AuthLevel.ANONYMOUS)
+def index(req: func.HttpRequest) -> func.HttpResponse:
+
+    return func.HttpResponse("Hello, world")
 
 @app.route(route="usuarios", auth_level=func.AuthLevel.ANONYMOUS, methods=["POST"])
 def iniciar_sesion(req: func.HttpRequest) -> func.HttpResponse:
