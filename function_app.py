@@ -27,7 +27,7 @@ def index(req: func.HttpRequest) -> func.HttpResponse:
 
     return func.HttpResponse("Hello, world")
 
-@app.route(route="usuarios", auth_level=func.AuthLevel.ANONYMOUS, methods=["POST"])
+@app.route(route="login", auth_level=func.AuthLevel.ANONYMOUS, methods=["POST"])
 def iniciar_sesion(req: func.HttpRequest) -> func.HttpResponse:
 
     usr = Usuario().load(req.get_json())
