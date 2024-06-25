@@ -1,6 +1,6 @@
 import azure.functions as func
 import logging
-from db.schemas import Usuario, Tweet, Message
+from db.schemas import Usuario, UsuarioSchema, Tweet, Message
 from json import dumps
 from Crypto.Hash import SHA256
 from Crypto import Random
@@ -30,7 +30,7 @@ def index(req: func.HttpRequest) -> func.HttpResponse:
 @app.route(route="login", auth_level=func.AuthLevel.ANONYMOUS, methods=["POST"])
 def iniciar_sesion(req: func.HttpRequest) -> func.HttpResponse:
 
-    usr = Usuario().load(req.get_json())
+    usr = UsuarioSchema().load(req.get_json())
 
     hallar = usuario.find_one({'handle': usr.handle})
     if not hallar:
