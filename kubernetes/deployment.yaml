@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: anytwitter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: anytwitter
+  template:
+    metadata:
+      labels:
+        app: anytwitter
+    spec:
+      containers:
+      - name: anytwitter
+        image: prober76/anytwitter:latest
+        ports:
+        - containerPort: 80
+        env:
+        - name: MONGO_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: anytwitter
+              key: MONGO_USERNAME
+        - name: MONGO_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: anytwitter
+              key: MONGO_PASSWORD
+        - name: MONGO_URI
+          valueFrom:
+            secretKeyRef:
+              name: anytwitter
+              key: MONGO_URI
+        - name: IMAGES_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              name: anytwitter
+              key: IMAGES_ENDPOINT
+        - name: AZURE_STORAGE_CONNECTION_STRING
+          valueFrom:
+            secretKeyRef:
+              name: anytwitter
+              key: AZURE_STORAGE_CONNECTION_STRING

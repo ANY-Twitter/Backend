@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: "45.55.105.117.nip.io"
+    http:
+      paths:
+      - backend:
+          service:
+            name: anytwitter-service
+            port:
+              number: 80
+        path: /
+        pathType: Prefix

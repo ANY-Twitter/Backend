@@ -4,7 +4,7 @@ csx
 .vs
 edge
 Publish
-
+kubernetes
 *.user
 *.suo
 *.cscfg
