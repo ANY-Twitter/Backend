@@ -48,10 +48,8 @@ def iniciar_sesion(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse("El correo o clave es incorrecto", status_code=400)
     src = ''
 
-    logging.info(hallar['pictureName'])
     if hallar['pictureName'] != '':
         src = f"{getenv('IMAGES_ENDPOINT')}/images/{hallar['pictureName']}"
-        logging.info(src)
 
     return func.HttpResponse(dumps({'name': hallar['name'], 'handle': hallar['handle'], 'srcProfilePicture': src}), mimetype="application/json")
 
@@ -81,11 +79,9 @@ def get_keys(req: func.HttpRequest) -> func.HttpResponse:
 @app.route(route="tweet", methods=["POST"], auth_level=func.AuthLevel.ANONYMOUS)
 def tweet(req: func.HttpRequest) -> func.HttpResponse:
     json_req = req.get_json()
-    logging.info(json_req)
 
     tweet_date = datetime.fromisoformat(json_req['date'].replace('Z', ''))
 
-    logging.info(tweet_date)
 
     tweet_data = TweetSchema().load(
         {'handle': json_req['handle'], 'data': json_req['data'], 'date': tweet_date.isoformat()})
@@ -95,7 +91,6 @@ def tweet(req: func.HttpRequest) -> func.HttpResponse:
     if not user:
         return func.HttpResponse("Usuario no encontrado", status_code=400)
 
-    logging.info('fecha' + tweet_data.date.isoformat())
     tweets.insert_one({'handle': tweet_data.handle,
                       'data': tweet_data.data, 'date': tweet_data.date.isoformat()})
 
@@ -138,8 +133,8 @@ def get_full_picture_url(picture_name):
 
 @app.route(route="obtenerTweets", methods=["GET"], auth_level=func.AuthLevel.ANONYMOUS)
 def obtener_tweets(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info(getenv('IMAGES_ENDPOINT') +
-                 "/images/" + "$usuario.pictureName")
+    # logging.info(getenv('IMAGES_ENDPOINT') +
+                #  "/images/" + "$usuario.pictureName")
     all_tweets = tweets.aggregate([  # {"$match": {"handle": '2'}},
         {"$lookup": {
             "from": "usuario",
@@ -160,7 +155,7 @@ def obtener_tweets(req: func.HttpRequest) -> func.HttpResponse:
         }])
     all_tweets = [{"id": tweet["id"], "usuario": tweet['usuario'],
                    "data": tweet['data'], "date": tweet['date']} for tweet in list(all_tweets)]
-    logging.info(type(all_tweets[0]['date']))
+    # logging.info(type(all_tweets[0]['date']))
 
     all_tweets = [
         {
@@ -189,7 +184,7 @@ def registrar(req: func.HttpRequest) -> func.HttpResponse:
     print(req.form)
 
     user_photo = req.files.get('user_photo')
-    logging.info(user_photo)
+    # logging.info(user_photo)
 
     hallar = usuario.find_one({'handle': handle})
     if hallar:

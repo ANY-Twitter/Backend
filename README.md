@@ -2,7 +2,17 @@
 
 El siguiente servicio de Backend utiliza Kubernetes para realizar escalamiento a medida que incrementa la tasa de solicitudes por unidad de tiempo. Utiliza las direcitvas de KEDA para realizar consultas al servidor de Prometheus alojado y obtener aquellos valores.
 
+## Arquitectura
+
+
+Arquitectura inicial:
+
+![](img/arqutectura_old.jpg)
+
+Arquitectura nueva para la nube:
 ![](img/k8s-http.png)
+![](img/arqutectura.jpg)
+
 
 ## Prerrequisitos
 
