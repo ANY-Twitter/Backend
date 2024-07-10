@@ -125,6 +125,11 @@ Crear un ScaledObject que se encargue del escalamiento en base a las métricas d
 kubectl apply -f kubernetes/scaled-object.yaml -n ingress-nginx
 ```
 
+Se accede a las métricas de Prometheus mediante el siguiente comando
+```sh
+kubectl port-forward deployment/prometheus-server 9090:9090 -n ingress-nginx
+```
+
 ## Acceder al API
 
 Las rutas de la api son las siguientes:
