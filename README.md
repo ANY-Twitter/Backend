@@ -115,3 +115,16 @@ Crear un ScaledObject que se encargue del escalamiento en base a las métricas d
 kubectl apply -f kubernetes/scaled-object.yaml -n ingress-nginx
 ```
 
+## Acceder al API
+
+Las rutas de la api son las siguientes:
+
+- GET /api/base
+- GET /api/obtenerMensajes
+- GET /api/obtenerTweets
+- GET /api/getKeysList
+- GET /api/getKeys/{handle}
+- POST /api/login
+- POST /api/crearUsuario
+- POST /api/tweet
+- POST /api/submitMessage
