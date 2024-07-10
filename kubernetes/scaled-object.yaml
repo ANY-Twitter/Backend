@@ -10,11 +10,13 @@ spec:
     kind: Deployment
     name: anytwitter 
   minReplicaCount: 1
+  maxReplicaCount: 10
   pollingInterval: 15
+  cooldownPeriod: 30
   triggers:
   - type: prometheus
     metadata:
       serverAddress: http://prometheus-server.ingress-nginx.svc.cluster.local:9090
       metricName: nginx_ingress_controller_requests
-      threshold: '100'
-      query: sum(rate(nginx_ingress_controller_requests[1m]))
+      threshold: '10'
+      query: sum(rate(nginx_ingress_controller_requests[20s]))
