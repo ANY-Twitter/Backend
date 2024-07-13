@@ -143,3 +143,109 @@ Las rutas de la api son las siguientes:
 - POST /api/crearUsuario
 - POST /api/tweet
 - POST /api/submitMessage
+
+## Información sobre KEDA
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: prometheus-scaledobject
+  namespace: ingress-nginx
+  labels:
+    deploymentName: anytwitter
+spec:
+  scaleTargetRef:
+    kind: Deployment
+    name: anytwitter 
+  minReplicaCount: 1
+  maxReplicaCount: 10
+  pollingInterval: 15
+  cooldownPeriod: 30
+  triggers:
+  - type: prometheus
+    metadata:
+      serverAddress: http://prometheus-server.ingress-nginx.svc.cluster.local:9090
+      metricName: nginx_ingress_controller_requests
+      threshold: '10'
+      query: sum(rate(nginx_ingress_controller_requests[20s]))
+```
+
+Hablando de los diferentes elementos:
+- **minReplicaCount**: Número mínimo de pods que se pueden tener en el deployment.
+- **maxReplicaCount**: Número máximo de pods que se pueden tener en el deployment.
+- **pollingInterval**: Intervalo de tiempo en segundos en el que se revisan las métricas.
+- **cooldownPeriod**: Tiempo en segundos que se espera antes de volver a escalar.
+- **triggers**: Lista de triggers que se pueden utilizar para escalar. En este caso, se utiliza el trigger de prometheus.
+  - **type**: Tipo de trigger que se utiliza.
+  - **metadata**: Metadatos del trigger.
+    - **serverAddress**: Dirección del servidor de prometheus.
+    - **metricName**: Nombre de la métrica que se utiliza.
+    - **threshold**: Umbral que se utiliza para escalar.
+    - **query**: Consulta que se realiza al servidor de prometheus.
+
+Con respecto a la directiva **triggers**, se puede utilizar diferentes tipos de triggers. En este caso, se utiliza el trigger de prometheus. Entre los diferentes tipos (**type**) se encuentran:
+- ActiveMQ
+- ActiveMQ Artemis
+- Apache Kafka
+- Apache Kafka (Experimental)
+- Apache Pulsar
+- ArangoDB
+- AWS CloudWatch
+- AWS DynamoDB
+- AWS DynamoDB Streams
+- AWS Kinesis Stream
+- AWS SQS Queue
+- Azure Application Insights
+- Azure Blob Storage
+- Azure Data Explorer
+- Azure Event Hubs
+- Azure Log Analytics
+- Azure Monitor
+- Azure Pipelines
+- Azure Service Bus
+- Azure Storage Queue
+- Cassandra
+- CouchDB
+- CPU
+- Cron
+- Datadog
+- Elasticsearch
+- Etcd
+- External
+- External Push
+- Github Runner Scaler
+- Google Cloud Platform Cloud Tasks
+- Google Cloud Platform Pub/Sub
+- Google Cloud Platform Stackdriver
+- Google Cloud Platform Storage
+- Graphite
+- Huawei Cloudeye
+- IBM MQ
+- InfluxDB
+- Kubernetes Workload
+- Liiklus Topic
+- Loki
+- Memory
+- Metrics API
+- MongoDB
+- MSSQL
+- MySQL
+- NATS JetStream
+- NATS Streaming
+- New Relic
+- OpenStack Metric
+- OpenStack Swift
+- PostgreSQL
+- Predictkube
+- Prometheus
+- RabbitMQ Queue
+- Redis Lists
+- Redis Lists (supports Redis Cluster)
+- Redis Lists (supports Redis Sentinel)
+- Redis Streams
+- Redis Streams (supports Redis Cluster)
+- Redis Streams (supports Redis Sentinel)
+- Selenium Grid Scaler
+- Solace PubSub+ Event Broker
+- Solr
