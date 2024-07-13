@@ -130,6 +130,17 @@ Se accede a las métricas de Prometheus mediante el siguiente comando
 kubectl port-forward deployment/prometheus-server 9090:9090 -n ingress-nginx
 ```
 
+## Caso en donde la imagen [prober76:anytwitter](https://hub.docker.com/r/prober76/anytwitter) no exista
+
+Existe un `DockerFile` en el repositorio el cual se puede usar para subir otra imagen al docker registry. Después de ello se tiene que reemplazar el nombre de la imagen en `deployment.yaml`:
+
+```
+      - name: anytwitter
+        image: {nuevo nombre}
+        ports:
+        - containerPort: 80
+```
+
 ## Acceder al API
 
 Las rutas de la api son las siguientes:
